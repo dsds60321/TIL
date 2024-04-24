@@ -41,3 +41,74 @@
 |스파이(Spy)| 호출된 내역을 기록합니다. 기록한 내용은 테스트 결과를 검증할때 사용하며 스텁이기도 합니다.|
 |모의(Mock)| 기대한 대로 상호작용한지 행위를 검증합니다. 기대한대로 동작하지 않는다면 익셉션을 발생시킬수 있습니다. 모의 객체는 스텁이자 스파이도 된다. |
 
+
+---
+## Mockito
+* Mockito 대역을 사용할때 자주 사용되는 객체 생성, 검증, 스텁등 지원하는 프레임워크이다.
+  * Mockito를 이용하여 항상 값을 값을 리턴하거나 Exception을 발생시킬수 있다.
+  * ArgumentMatchers() 클래스를 사용하여 임의값을 항상 리턴하게도 할 수 있다.
+
+### 매칭 처리
+| 메서드 명                                         | 설명                    |
+|-----------------------------------------------|-----------------------|
+| anyInt(), anyShort(), anyLong(), anyBoolean() | 기본 데이터 타입에 대한 임의 값 일치 |
+| anyString()                                   | 문자열에 대한 임의값 일치        |
+| any()                                         |임의 타입에 대한 일치|
+| anyList() ...                                 |콜렉션에 대한 일치|
+|matchers()|정규표현식을 이용한 String 값 일치|
+|eq()| 특정값 일치 여부|
+```java
+// 항상 "NUM"이 리턴 됨
+    @Test
+    void mockTest() {
+        GameNumGen genMock = mock(GameNumGen.class);
+        // given을 통해 특정 값을 리턴하도록 설정 가능
+        given(genMock.generate(any())).willReturn("NUM");
+
+        String num = genMock.generate(GameLevel.EASY);
+        assertEquals("123", num);
+    }
+```
+
+### 행위 검증
+* should 후에 동작
+* 모의 객체가 기대한 대로 불렀는지 검증하는 코드
+
+|메서드 명|설명|
+|-------|---|
+|only()|한 번만 호출|
+|times(int)| 지정한 횟수만큼 호출|
+|never()|호출하지 않음|
+|atLeast(int)|적어도 지정한 횟수만큼 호출|
+|atLeastOnce()|atLeast(1)과 동일|
+|atMost(int)|최대 지정한 횟수만큼 호출|
+
+```java
+// 항상 "NUM"이 리턴 됨
+    @Test
+    void mockTest() {
+        GameNumGen genMock = mock(GameNumGen.class);
+        Game game= new Game(genMock);
+        game.init(GameLevel.EASY);
+        
+        then(genMock).should().generate(GameLevel.EASY);
+        // then(genMock).should(only()).generate(GameLevel.EASY);
+    }
+```
+
+### 인자 캡쳐
+* 객체를 쉽게 검증하기 위해 사용
+* 모의 객체의 메서드를 호출할때 전달한 인자가 정확한지 테스트
+```java
+@Test
+void whenRegisterThenMail() {
+    userRegister("id", "pw", "email@email.com");
+
+    ArgumentCaptor<String> captor= ArgumentCaptor.forClass(String.class);
+    then(mockEmailNotifier)
+        .should().sendRegisterEmail(captor.capture());
+    
+    String realEmail = captor.getValue();
+    assertEqual("email@email.com", realEmail);
+}
+```
